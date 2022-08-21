@@ -3,35 +3,36 @@ package emu.grasscutter.command.commands;
 import emu.grasscutter.Grasscutter;
 import emu.grasscutter.command.Command;
 import emu.grasscutter.command.CommandHandler;
-import emu.grasscutter.game.GenshinPlayer;
+import emu.grasscutter.command.Command.TargetRequirement;
+import emu.grasscutter.game.player.Player;
 
 import java.util.List;
 
-@Command(label = "say", usage = "say <player> <message>", description = "Sends a message to a player as the server",
-        aliases = {"sendservmsg", "sendservermessage", "sendmessage"}, permission = "server.sendmessage")
+@Command(
+    label = "sendMessage",
+    aliases = {"say", "sendservmsg", "sendservermessage", "b", "broadcast"},
+    usage = {"<message>"},
+    permission = "server.sendmessage",
+    permissionTargeted = "server.sendmessage.others",
+    targetRequirement = TargetRequirement.NONE)
 public final class SendMessageCommand implements CommandHandler {
 
     @Override
-    public void execute(GenshinPlayer sender, List<String> args) {
-        if (args.size() < 2) {
-            CommandHandler.sendMessage(null, "Usage: sendmessage <player> <message>");
+    public void execute(Player sender, Player targetPlayer, List<String> args) {
+        if (args.size() == 0) {
+            sendUsageMessage(sender);
             return;
         }
 
-        try {
-            int target = Integer.parseInt(args.get(0));
-            String message = String.join(" ", args.subList(1, args.size()));
+        String message = String.join(" ", args);
 
-            GenshinPlayer targetPlayer = Grasscutter.getGameServer().getPlayerByUid(target);
-            if (targetPlayer == null) {
-                CommandHandler.sendMessage(sender, "Player not found.");
-                return;
+        if (targetPlayer == null) {
+            for (Player p : Grasscutter.getGameServer().getPlayers().values()) {
+                CommandHandler.sendMessage(p, message);
             }
-
+        } else {
             CommandHandler.sendMessage(targetPlayer, message);
-            CommandHandler.sendMessage(sender, "Message sent.");
-        } catch (NumberFormatException ignored) {
-            CommandHandler.sendMessage(sender, "Invalid player ID.");
         }
+        CommandHandler.sendTranslatedMessage(sender, "commands.sendMessage.success");
     }
 }

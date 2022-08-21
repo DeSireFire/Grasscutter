@@ -1,16 +1,29 @@
 package emu.grasscutter.server.packet.send;
 
-import emu.grasscutter.net.packet.GenshinPacket;
+import java.util.List;
+
+import emu.grasscutter.net.packet.BasePacket;
 import emu.grasscutter.net.packet.PacketOpcodes;
+import emu.grasscutter.net.proto.ChatInfoOuterClass.ChatInfo;
 import emu.grasscutter.net.proto.PullPrivateChatRspOuterClass.PullPrivateChatRsp;
+import emu.grasscutter.net.proto.RetcodeOuterClass.Retcode;
 
-public class PacketPullPrivateChatRsp extends GenshinPacket {
-	
-	public PacketPullPrivateChatRsp() {
-		super(PacketOpcodes.PullPrivateChatRsp);
+public class PacketPullPrivateChatRsp extends BasePacket {
 
-		PullPrivateChatRsp proto = PullPrivateChatRsp.newBuilder().build();
-		
-		this.setData(proto);
-	}
+    public PacketPullPrivateChatRsp(List<ChatInfo> history) {
+        super(PacketOpcodes.PullPrivateChatRsp);
+
+        PullPrivateChatRsp.Builder builder = PullPrivateChatRsp.newBuilder();
+
+        if (history == null) {
+            builder.setRetcode(Retcode.RET_FAIL_VALUE);
+        }
+        else {
+            for (var info : history) {
+                builder.addChatInfo(info);
+            }
+        }
+
+        this.setData(builder.build());
+    }
 }
